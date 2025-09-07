@@ -3,11 +3,9 @@ import path from "path";
 
 export const runtime = "nodejs";
 
-import { NextResponse } from "next/server";
-
 export async function GET(
   _req: Request,
-  ctx: RouteContext<'/api/reports/[id]'>
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
   const fileId = id;
@@ -18,7 +16,7 @@ export async function GET(
     const contentType = full.endsWith(".md")
       ? "text/markdown; charset=utf-8"
       : "application/octet-stream";
-    return new NextResponse(data, {
+    return new Response(data, {
       status: 200,
       headers: {
         "Content-Type": contentType,
@@ -26,7 +24,7 @@ export async function GET(
       },
     });
   } catch (e: unknown) {
-    return new NextResponse(JSON.stringify({ error: (e as Error)?.message || String(e) }), {
+    return new Response(JSON.stringify({ error: (e as Error)?.message || String(e) }), {
       status: 404,
       headers: { "Content-Type": "application/json" },
     });

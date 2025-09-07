@@ -6,22 +6,24 @@
 [![AI SDK](https://img.shields.io/badge/AI_SDK-3.0-FF6B6B?style=for-the-badge)](https://sdk.vercel.ai/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-> **Advanced AI Research Assistant** with multi-provider LLM support, web search capabilities, and comprehensive document analysis.
+> **Advanced AI Research Assistant** with integrated chat interface, multi-provider LLM support, web search capabilities, and comprehensive document analysis.
 
 ## 📊 Overview
 
-DeepOne Research is a cutting-edge AI-powered research platform that combines the power of multiple LLM providers with advanced web search and document analysis capabilities.
+DeepOne Research is a cutting-edge AI-powered research platform that seamlessly integrates comprehensive research capabilities directly into your chat experience. Toggle between regular conversation and deep research mode with a single click.
 
 ### 🎯 Key Features
 
 | Feature | Description | Status |
 |---------|-------------|--------|
 | 🤖 **Multi-Provider AI** | OpenAI, Google Gemini, Groq, Mistral, Anthropic | ✅ Active |
-| 🔍 **Web Search Integration** | Tavily API for real-time research | ✅ Active |
+| 🔍 **Integrated Deep Research** | Toggle research mode directly in chat interface | ✅ Active |
+| 🌐 **Web Search Integration** | Tavily API for real-time research | ✅ Active |
 | 📄 **Document Processing** | RAG with local document ingestion | ✅ Active |
 | 🌓 **Dark Mode** | Beautiful dark theme by default | ✅ Active |
 | 📊 **Export Formats** | MD, PDF, DOCX with citations | ✅ Active |
 | 🔄 **Real-time Streaming** | SSE for live research updates | ✅ Active |
+| 💬 **Unified Chat Interface** | Switch between chat and research in one place | ✅ Active |
 
 ## 🚀 Quick Start
 
@@ -34,8 +36,8 @@ DeepOne Research is a cutting-edge AI-powered research platform that combines th
 ### 1️⃣ Installation
 
 ```bash
-git clone <repository-url>
-cd deep-complete-research-agent-v02
+git clone https://github.com/Kedhareswer/DeepOne.git
+cd DeepOne
 npm install
 ```
 
@@ -70,32 +72,36 @@ npm run dev
 
 ```mermaid
 graph TB
-    A[User Interface] --> B[Assistant Chat]
-    A --> C[Research Module]
+    A[Unified Chat Interface] --> B[Deep Research Toggle]
+    A --> C[Regular Chat Mode]
     A --> D[Settings Panel]
     
-    B --> E[Multi-Provider Router]
-    C --> E
+    B --> E[Research Pipeline]
+    C --> F[Multi-Provider Router]
+    E --> F
     
-    E --> F[OpenAI GPT]
-    E --> G[Google Gemini]
-    E --> H[Groq Llama]
-    E --> I[Mistral]
-    E --> J[Anthropic Claude]
+    F --> G[OpenAI GPT]
+    F --> H[Google Gemini]
+    F --> I[Groq Llama]
+    F --> J[Mistral]
+    F --> K[Anthropic Claude]
     
-    C --> K[Tavily Search API]
-    C --> L[Document Ingestion]
+    E --> L[Tavily Search API]
+    E --> M[Document Ingestion]
     
-    L --> M[Vector Database]
-    K --> N[Web Results]
+    M --> N[Vector Database]
+    L --> O[Web Results]
     
-    N --> O[Research Report]
-    M --> O
-    O --> P[Export Engine]
+    O --> P[Research Report]
+    N --> P
+    P --> Q[Streaming Response]
     
-    P --> Q[Markdown]
-    P --> R[PDF]
-    P --> S[DOCX]
+    Q --> R[Chat Display]
+    P --> S[Export Engine]
+    
+    S --> T[Markdown]
+    S --> U[PDF]
+    S --> V[DOCX]
 ```
 
 ## 🛠️ Technology Stack
@@ -183,11 +189,21 @@ Experience live research as it happens:
 
 ## 📱 User Interface
 
-### **Chat Interface**
+### **Unified Chat Interface**
 - Clean, modern design with dark theme
 - Provider/model selection in header
+- **Deep Research Toggle**: Switch between chat and research modes instantly
 - Real-time parameter adjustment
 - Conversation history with threading
+- Integrated research streaming directly in chat
+
+### **Deep Research Toggle**
+🔬 **One-Click Research Mode**
+- Toggle appears as a pill button in the chat input area
+- When enabled: "Ask a research question..." placeholder
+- When disabled: Regular "Send a message..." mode
+- Visual indicator shows current mode (ON badge when active)
+- Seamless switching without page navigation
 
 ### **Settings Panel**
 Comprehensive configuration with four main sections:
@@ -195,16 +211,16 @@ Comprehensive configuration with four main sections:
 | Section | Features |
 |---------|----------|
 | **🔑 AI Configuration** | Provider selection, model preferences, performance tuning |
-| **⚡ Research** | Topic input, citation styles, format selection |
+| **⚡ Research** | Advanced research settings, citation styles, format selection |
 | **📂 Documents** | Local file ingestion, RAG configuration, index management |
 | **📄 Export** | Format preferences, template selection, output customization |
 
-### **Research Workflow**
-1. **Topic Input** → Research question or topic
-2. **Provider Selection** → Choose optimal AI model
-3. **Search Execution** → Web search + document retrieval
-4. **Report Generation** → Structured analysis with citations
-5. **Export Options** → Professional document formats
+### **Integrated Research Workflow**
+1. **Toggle Deep Research** → Click the research pill in chat input
+2. **Ask Research Question** → Type your research topic directly in chat
+3. **Real-time Processing** → Watch research progress stream live in chat
+4. **Comprehensive Report** → Get structured analysis with citations in chat
+5. **Continue Conversation** → Ask follow-up questions or toggle back to chat mode
 
 ## 🔧 Configuration
 
@@ -230,40 +246,50 @@ Fallback: First available provider
 
 ## 📚 Usage Examples
 
-### **Basic Research Query**
+### **Integrated Chat Research**
 ```typescript
-// Simple research request
-"Latest developments in quantum computing 2024"
+// Toggle Deep Research mode in chat
+// Then ask: "Latest developments in quantum computing 2024"
 
-// Enhanced structured response with:
-// - Executive summary
-// - Current market analysis
-// - Key players and technologies
-// - Investment trends
-// - Future predictions
-// - Technical examples
+// Real-time streaming response with:
+// - Planning phase: "Breaking into sub-questions..."
+// - Execution phase: "Retrieving sources... (3/5 complete)"
+// - Writing phase: "Composing comprehensive report..."
+// - Final report with:
+//   - Executive summary
+//   - Current market analysis
+//   - Key players and technologies
+//   - Investment trends
+//   - Future predictions
+//   - Technical examples
+//   - Proper citations
 ```
 
-### **Advanced Research with Parameters**
+### **Advanced Research Configuration**
 ```typescript
+// Configure in header while in Deep Research mode:
 {
-  topic: "AI in healthcare applications",
-  provider: "openai",
-  model: "gpt-4o",
-  maxResults: 10,
-  totalWords: 2000,
-  citationStyle: "APA",
-  includeLocal: true,
-  formats: ["md", "pdf", "docx"]
+  provider: "openai",          // Select AI provider
+  model: "gpt-4o",            // Choose specific model
+  maxResults: 10,             // Web search result limit
+  totalWords: 2000,           // Target report length  
+  // Additional settings available in Settings panel:
+  citationStyle: "APA",       // Citation format
+  includeLocal: true,         // Use local documents
+  formats: ["md", "pdf", "docx"] // Export formats
 }
+
+// Then simply ask in chat: "AI in healthcare applications"
+// Get comprehensive research streamed directly to chat
 ```
 
 ## 🚦 API Endpoints
 
 | Endpoint | Method | Description | Parameters |
 |----------|--------|-------------|------------|
-| `/api/chat` | POST | Chat completion | `provider`, `model`, `messages` |
+| `/api/chat` | POST | Unified chat/research endpoint | `provider`, `model`, `messages`, `deepResearch` |
 | `/api/research` | POST | Generate research report | `task`, `provider`, `formats` |
+| `/api/research/stream` | GET | Stream research progress | `task`, `provider`, `model`, `max`, `words` |
 | `/api/providers` | GET | List available providers | None |
 | `/api/files/ingest` | POST | Ingest documents | Optional: `X-API-Key` |
 | `/api/reports/{id}` | GET | Download report | `id` |
@@ -300,8 +326,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ### Development Setup
 ```bash
 # Fork and clone the repository
-git clone <your-fork>
-cd deep-complete-research-agent-v02
+git clone https://github.com/your-username/DeepOne.git
+cd DeepOne
 
 # Install dependencies
 npm install
@@ -330,9 +356,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Status
 
-![GitHub last commit](https://img.shields.io/github/last-commit/username/repo?style=flat-square)
-![GitHub issues](https://img.shields.io/github/issues/username/repo?style=flat-square)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/username/repo?style=flat-square)
+![GitHub last commit](https://img.shields.io/github/last-commit/Kedhareswer/DeepOne?style=flat-square)
+![GitHub issues](https://img.shields.io/github/issues/Kedhareswer/DeepOne?style=flat-square)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/Kedhareswer/DeepOne?style=flat-square)
 
 ---
 
@@ -340,6 +366,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for the AI research community**
 
-[🌟 Star this repo](https://github.com/username/repo/stargazers) • [🐛 Report Bug](https://github.com/username/repo/issues) • [💡 Request Feature](https://github.com/username/repo/issues)
+[🌟 Star this repo](https://github.com/Kedhareswer/DeepOne/stargazers) • [🐛 Report Bug](https://github.com/Kedhareswer/DeepOne/issues) • [💡 Request Feature](https://github.com/Kedhareswer/DeepOne/issues)
 
 </div>

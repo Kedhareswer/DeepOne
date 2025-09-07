@@ -16,8 +16,10 @@ import {
   PencilIcon,
   RefreshCwIcon,
   Square,
+  Search,
 } from "lucide-react";
 import type { FC } from "react";
+import { useDeepResearch } from "@/app/assistant";
 
 import {
   ComposerAddAttachment,
@@ -31,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
 import * as m from "motion/react-m";
+import { Badge } from "@/components/ui/badge";
 
 export const Thread: FC = () => {
   return (
@@ -166,6 +169,8 @@ const ThreadWelcomeSuggestions: FC = () => {
 };
 
 const Composer: FC = () => {
+  const { isDeepResearch, setIsDeepResearch } = useDeepResearch();
+
   return (
     <div className="aui-composer-wrapper sticky bottom-0 mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 overflow-visible rounded-t-3xl bg-background pb-4 md:pb-6">
       <ThreadScrollToBottom />
@@ -175,33 +180,58 @@ const Composer: FC = () => {
       <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col rounded-3xl border border-border bg-muted px-1 pt-2 shadow-[0_9px_9px_0px_rgba(0,0,0,0.01),0_2px_5px_0px_rgba(0,0,0,0.06)] dark:border-muted-foreground/15">
         <ComposerAttachments />
         <ComposerPrimitive.Input
-          placeholder="Send a message..."
+          placeholder={isDeepResearch ? "Ask a research question..." : "Send a message..."}
           className="aui-composer-input mb-1 max-h-32 min-h-16 w-full resize-none bg-transparent px-3.5 pt-1.5 pb-3 text-base outline-none placeholder:text-muted-foreground focus:outline-primary"
           rows={1}
           autoFocus
           aria-label="Message input"
         />
-        <ComposerAction />
+        <ComposerAction isDeepResearch={isDeepResearch} setIsDeepResearch={setIsDeepResearch} />
       </ComposerPrimitive.Root>
     </div>
   );
 };
 
-const ComposerAction: FC = () => {
+const ComposerAction: FC<{
+  isDeepResearch: boolean;
+  setIsDeepResearch: (value: boolean) => void;
+}> = ({ isDeepResearch, setIsDeepResearch }) => {
   return (
     <div className="aui-composer-action-wrapper relative mx-1 mt-2 mb-2 flex items-center justify-between">
-      <ComposerAddAttachment />
+      <div className="flex items-center gap-2">
+        <ComposerAddAttachment />
+        <button
+          type="button"
+          onClick={() => setIsDeepResearch(!isDeepResearch)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border",
+            isDeepResearch
+              ? "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
+              : "bg-background text-muted-foreground hover:bg-accent hover:text-foreground border-border"
+          )}
+          aria-label={`${isDeepResearch ? 'Disable' : 'Enable'} Deep Research mode`}
+          title={isDeepResearch ? 'Switch to regular chat mode' : 'Enable Deep Research mode for comprehensive research reports'}
+        >
+          <Search className="size-3" />
+          Deep Research
+          {isDeepResearch && (
+            <Badge variant="secondary" className="ml-1 px-1 py-0 text-xs h-4">
+              ON
+            </Badge>
+          )}
+        </button>
+      </div>
 
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
           <TooltipIconButton
-            tooltip="Send message"
+            tooltip={isDeepResearch ? "Generate research report" : "Send message"}
             side="bottom"
             type="submit"
             variant="default"
             size="icon"
             className="aui-composer-send size-[34px] rounded-full p-1"
-            aria-label="Send message"
+            aria-label={isDeepResearch ? "Generate research report" : "Send message"}
           >
             <ArrowUpIcon className="aui-composer-send-icon size-5" />
           </TooltipIconButton>

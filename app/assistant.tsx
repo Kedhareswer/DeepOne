@@ -13,9 +13,17 @@ import {
 } from "@/components/ui/sidebar";
 import { ThreadListSidebar } from "@/components/assistant-ui/threadlist-sidebar";
 import { Separator } from "@/components/ui/separator";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createContext, useContext } from "react";
 import Link from "next/link";
 import { PROVIDERS, MODEL_OPTIONS, defaultModelFor, type ProviderId, type ModelInfo } from "@/lib/models";
+
+// Context for Deep Research state
+const DeepResearchContext = createContext<{
+  isDeepResearch: boolean;
+  setIsDeepResearch: (value: boolean) => void;
+}>({ isDeepResearch: false, setIsDeepResearch: () => {} });
+
+export const useDeepResearch = () => useContext(DeepResearchContext);
 
 
 export const Assistant = () => {
@@ -25,6 +33,7 @@ export const Assistant = () => {
   const [providersLoaded, setProvidersLoaded] = useState<boolean>(false);
   const [maxResults, setMaxResults] = useState<number>(5);
   const [wordCount, setWordCount] = useState<number>(1200);
+  const [isDeepResearch, setIsDeepResearch] = useState<boolean>(false);
 
   // Reset model to the first available when provider changes
   useEffect(() => {
@@ -60,7 +69,7 @@ export const Assistant = () => {
 
   const runtime = useChatRuntime({
     transport: new AssistantChatTransport({
-      api: providersLoaded ? `/api/chat?provider=${encodeURIComponent(provider)}&model=${encodeURIComponent(model)}&max=${encodeURIComponent(String(maxResults))}&words=${encodeURIComponent(String(wordCount))}` : undefined,
+      api: providersLoaded ? `/api/chat?provider=${encodeURIComponent(provider)}&model=${encodeURIComponent(model)}&max=${encodeURIComponent(String(maxResults))}&words=${encodeURIComponent(String(wordCount))}&deepResearch=${encodeURIComponent(String(isDeepResearch))}` : undefined,
     }),
   });
 
@@ -86,11 +95,12 @@ export const Assistant = () => {
   }
 
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
-      <SidebarProvider>
-        <div className="flex h-dvh w-full pr-0.5">
-          <ThreadListSidebar />
-          <SidebarInset>
+    <DeepResearchContext.Provider value={{ isDeepResearch, setIsDeepResearch }}>
+      <AssistantRuntimeProvider runtime={runtime}>
+        <SidebarProvider>
+          <div className="flex h-dvh w-full pr-0.5">
+            <ThreadListSidebar />
+            <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-4 border-b px-4">
               <SidebarTrigger />
               <Separator orientation="vertical" className="mr-2 h-4" />
@@ -192,9 +202,10 @@ export const Assistant = () => {
             <div className="flex-1 overflow-hidden">
               <Thread />
             </div>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-    </AssistantRuntimeProvider>
+            </SidebarInset>
+          </div>
+        </SidebarProvider>
+      </AssistantRuntimeProvider>
+    </DeepResearchContext.Provider>
   );
 };

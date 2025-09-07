@@ -10,8 +10,14 @@ export async function POST(req: Request) {
   const modelId = url.searchParams.get("model") ?? "gemini-1.5-flash";
   const maxParam = url.searchParams.get("max");
   const wordsParam = url.searchParams.get("words");
+  const deepResearch = url.searchParams.get("deepResearch") === "true";
 
   const { messages }: { messages: UIMessage[] } = await req.json();
+
+  // If Deep Research mode is enabled, use research generation instead
+  if (deepResearch) {
+    return handleDeepResearchChat(req, provider, modelId, maxParam, wordsParam, messages);
+  }
 
   // Early env check for clearer errors
   const requiredEnvByProvider: Record<string, string> = {
@@ -192,4 +198,147 @@ export async function POST(req: Request) {
   });
 
   return result.toUIMessageStreamResponse();
+}
+
+// Handle Deep Research chat mode
+async function handleDeepResearchChat(
+  req: Request,
+  provider: string,
+  modelId: string,
+  maxParam: string | null,
+  wordsParam: string | null,
+  messages: UIMessage[]
+) {
+  // Get the last user message as the research task
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((m) => m.role === "user");
+  
+  if (!lastUserMessage) {
+    return new Response(
+      JSON.stringify({ error: "No research task provided" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Extract text content from the message
+  const modelMessages = convertToModelMessages([lastUserMessage]);
+  const lastMsg = modelMessages[0];
+  let task = "";
+  
+  if (lastMsg && lastMsg.content) {
+    if (typeof lastMsg.content === "string") {
+      task = lastMsg.content;
+    } else if (Array.isArray(lastMsg.content)) {
+      task = lastMsg.content
+        .filter((part: any) => part.type === "text")
+        .map((part: any) => part.text)
+        .join(" ");
+    }
+  }
+
+  if (!task) {
+    return new Response(
+      JSON.stringify({ error: "No research task text found" }),
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const maxResults = Math.max(1, Math.min(20, Number(maxParam ?? 5)));
+  const totalWords = Math.max(300, Number(wordsParam ?? 1200));
+
+  // Use the research streaming endpoint directly
+  const researchUrl = new URL("/api/research/stream", new URL(req.url).origin);
+  researchUrl.searchParams.set("task", task);
+  researchUrl.searchParams.set("provider", provider);
+  researchUrl.searchParams.set("model", modelId);
+  researchUrl.searchParams.set("max", String(maxResults));
+  researchUrl.searchParams.set("words", String(totalWords));
+
+  try {
+    // Create a streaming response that formats research SSE as chat stream
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const response = await fetch(researchUrl.toString());
+          if (!response.ok) {
+            throw new Error(`Research API failed: ${response.statusText}`);
+          }
+          
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error("No response body");
+          }
+
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let reportContent = "";
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            
+            for (const line of lines) {
+              if (line.startsWith("data: ")) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  
+                  if (data.type === "completed" && data.preview) {
+                    reportContent = data.preview;
+                    // Send as chat completion
+                    const chunk = JSON.stringify({
+                      type: "text-delta",
+                      textDelta: reportContent
+                    });
+                    controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+                  } else if (data.type === "status" || data.type === "progress") {
+                    // Send status updates as deltas
+                    const statusText = `\n\n*${data.message || `${data.phase}: ${data.completed || 0}/${data.total || 0}`}*\n\n`;
+                    const chunk = JSON.stringify({
+                      type: "text-delta",
+                      textDelta: statusText
+                    });
+                    controller.enqueue(encoder.encode(`data: ${chunk}\n\n`));
+                  }
+                } catch (e) {
+                  // Skip malformed JSON
+                }
+              }
+            }
+          }
+          
+          // Send completion
+          const finishChunk = JSON.stringify({ type: "finish", finish_reason: "stop" });
+          controller.enqueue(encoder.encode(`data: ${finishChunk}\n\n`));
+          
+        } catch (error) {
+          const errorChunk = JSON.stringify({
+            type: "error",
+            error: `Research failed: ${error}`
+          });
+          controller.enqueue(encoder.encode(`data: ${errorChunk}\n\n`));
+        } finally {
+          controller.close();
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+      },
+    });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: `Research generation failed: ${error}` }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 }
