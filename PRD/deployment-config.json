@@ -1,0 +1,449 @@
+{
+  "deployment_configurations": {
+    "metadata": {
+      "version": "1.0",
+      "last_updated": "2025-01-06",
+      "supported_platforms": ["docker", "kubernetes", "local", "cloud"]
+    },
+    "local_development": {
+      "requirements": {
+        "python_version": "3.11+",
+        "system_packages": ["git", "pip"],
+        "optional_packages": ["poetry", "conda"]
+      },
+      "environment_setup": {
+        "required_env_vars": [
+          "OPENAI_API_KEY",
+          "TAVILY_API_KEY"
+        ],
+        "optional_env_vars": [
+          "GROQ_API_KEY",
+          "OPENROUTER_API_KEY",
+          "ANTHROPIC_API_KEY",
+          "GOOGLE_API_KEY",
+          "RETRIEVER",
+          "FAST_LLM",
+          "SMART_LLM"
+        ]
+      },
+      "installation_steps": [
+        {
+          "step": 1,
+          "action": "clone_repository",
+          "command": "git clone https://github.com/assafelovic/gpt-researcher.git"
+        },
+        {
+          "step": 2,
+          "action": "install_dependencies",
+          "command": "pip install -r requirements.txt"
+        },
+        {
+          "step": 3,
+          "action": "configure_environment",
+          "command": "cp .env.example .env && edit .env"
+        },
+        {
+          "step": 4,
+          "action": "start_server",
+          "command": "python -m uvicorn main:app --reload"
+        }
+      ],
+      "ports": {
+        "8000": "FastAPI server",
+        "3000": "NextJS frontend (optional)"
+      },
+      "health_check": "curl http://localhost:8000/health"
+    },
+    "docker_deployment": {
+      "compose_file": "docker-compose.yml",
+      "services": {
+        "gpt-researcher": {
+          "image": "gptresearcher/gpt-researcher",
+          "build_context": "./",
+          "environment_variables": [
+            "OPENAI_API_KEY",
+            "TAVILY_API_KEY",
+            "GROQ_API_KEY",
+            "OPENROUTER_API_KEY",
+            "LANGCHAIN_API_KEY"
+          ],
+          "volumes": [
+            "./my-docs:/usr/src/app/my-docs:rw",
+            "./outputs:/usr/src/app/outputs:rw",
+            "./logs:/usr/src/app/logs:rw"
+          ],
+          "ports": ["8000:8000"],
+          "restart_policy": "always"
+        },
+        "gptr-nextjs": {
+          "image": "gptresearcher/gptr-nextjs",
+          "build_context": "./frontend/nextjs",
+          "environment_variables": [
+            "NEXT_PUBLIC_GPTR_API_URL",
+            "CHOKIDAR_USEPOLLING"
+          ],
+          "ports": ["3000:3000"],
+          "volumes": [
+            "./frontend/nextjs:/app",
+            "/app/node_modules"
+          ]
+        }
+      },
+      "deployment_commands": [
+        "docker-compose up --build",
+        "docker-compose up -d"
+      ],
+      "scaling": {
+        "horizontal": "docker-compose up --scale gpt-researcher=3",
+        "load_balancer": "nginx configuration required"
+      }
+    },
+    "kubernetes_deployment": {
+      "namespace": "gpt-researcher",
+      "manifests": {
+        "deployment": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "metadata": {
+            "name": "gpt-researcher",
+            "namespace": "gpt-researcher"
+          },
+          "spec": {
+            "replicas": 3,
+            "selector": {
+              "matchLabels": {
+                "app": "gpt-researcher"
+              }
+            },
+            "template": {
+              "metadata": {
+                "labels": {
+                  "app": "gpt-researcher"
+                }
+              },
+              "spec": {
+                "containers": [
+                  {
+                    "name": "gpt-researcher",
+                    "image": "gptresearcher/gpt-researcher:latest",
+                    "ports": [
+                      {
+                        "containerPort": 8000
+                      }
+                    ],
+                    "env": [
+                      {
+                        "name": "OPENAI_API_KEY",
+                        "valueFrom": {
+                          "secretKeyRef": {
+                            "name": "api-keys",
+                            "key": "openai-api-key"
+                          }
+                        }
+                      },
+                      {
+                        "name": "TAVILY_API_KEY",
+                        "valueFrom": {
+                          "secretKeyRef": {
+                            "name": "api-keys",
+                            "key": "tavily-api-key"
+                          }
+                        }
+                      }
+                    ],
+                    "resources": {
+                      "requests": {
+                        "memory": "1Gi",
+                        "cpu": "500m"
+                      },
+                      "limits": {
+                        "memory": "2Gi",
+                        "cpu": "1000m"
+                      }
+                    },
+                    "volumeMounts": [
+                      {
+                        "name": "docs-storage",
+                        "mountPath": "/usr/src/app/my-docs"
+                      },
+                      {
+                        "name": "outputs-storage",
+                        "mountPath": "/usr/src/app/outputs"
+                      }
+                    ]
+                  }
+                ],
+                "volumes": [
+                  {
+                    "name": "docs-storage",
+                    "persistentVolumeClaim": {
+                      "claimName": "docs-pvc"
+                    }
+                  },
+                  {
+                    "name": "outputs-storage",
+                    "persistentVolumeClaim": {
+                      "claimName": "outputs-pvc"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "service": {
+          "apiVersion": "v1",
+          "kind": "Service",
+          "metadata": {
+            "name": "gpt-researcher-service",
+            "namespace": "gpt-researcher"
+          },
+          "spec": {
+            "selector": {
+              "app": "gpt-researcher"
+            },
+            "ports": [
+              {
+                "protocol": "TCP",
+                "port": 80,
+                "targetPort": 8000
+              }
+            ],
+            "type": "LoadBalancer"
+          }
+        },
+        "ingress": {
+          "apiVersion": "networking.k8s.io/v1",
+          "kind": "Ingress",
+          "metadata": {
+            "name": "gpt-researcher-ingress",
+            "namespace": "gpt-researcher",
+            "annotations": {
+              "kubernetes.io/ingress.class": "nginx",
+              "cert-manager.io/cluster-issuer": "letsencrypt-prod"
+            }
+          },
+          "spec": {
+            "tls": [
+              {
+                "hosts": ["gpt-researcher.yourdomain.com"],
+                "secretName": "gpt-researcher-tls"
+              }
+            ],
+            "rules": [
+              {
+                "host": "gpt-researcher.yourdomain.com",
+                "http": {
+                  "paths": [
+                    {
+                      "path": "/",
+                      "pathType": "Prefix",
+                      "backend": {
+                        "service": {
+                          "name": "gpt-researcher-service",
+                          "port": {
+                            "number": 80
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "secrets": {
+        "api-keys": {
+          "type": "Opaque",
+          "data": {
+            "openai-api-key": "<base64-encoded-key>",
+            "tavily-api-key": "<base64-encoded-key>",
+            "groq-api-key": "<base64-encoded-key>",
+            "openrouter-api-key": "<base64-encoded-key>"
+          }
+        }
+      },
+      "persistent_volumes": {
+        "docs-pvc": {
+          "storage": "10Gi",
+          "access_mode": "ReadWriteMany"
+        },
+        "outputs-pvc": {
+          "storage": "50Gi",
+          "access_mode": "ReadWriteMany"
+        }
+      }
+    },
+    "cloud_deployments": {
+      "aws": {
+        "service": "ECS",
+        "configuration": {
+          "cluster": "gpt-researcher-cluster",
+          "task_definition": {
+            "family": "gpt-researcher",
+            "cpu": "1024",
+            "memory": "2048",
+            "container_definitions": [
+              {
+                "name": "gpt-researcher",
+                "image": "gptresearcher/gpt-researcher:latest",
+                "memory": 2048,
+                "essential": true,
+                "portMappings": [
+                  {
+                    "containerPort": 8000,
+                    "protocol": "tcp"
+                  }
+                ],
+                "environment": [
+                  {
+                    "name": "OPENAI_API_KEY",
+                    "value": "from-secrets-manager"
+                  }
+                ]
+              }
+            ]
+          },
+          "service": {
+            "desired_count": 2,
+            "load_balancer": "ALB",
+            "auto_scaling": true
+          }
+        }
+      },
+      "azure": {
+        "service": "Container Instances",
+        "configuration": {
+          "resource_group": "gpt-researcher-rg",
+          "container_group": {
+            "name": "gpt-researcher-group",
+            "os_type": "Linux",
+            "containers": [
+              {
+                "name": "gpt-researcher",
+                "image": "gptresearcher/gpt-researcher:latest",
+                "resources": {
+                  "requests": {
+                    "cpu": 1,
+                    "memory_in_gb": 2
+                  }
+                },
+                "ports": [
+                  {
+                    "port": 8000,
+                    "protocol": "TCP"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "gcp": {
+        "service": "Cloud Run",
+        "configuration": {
+          "service_name": "gpt-researcher",
+          "region": "us-central1",
+          "container": {
+            "image": "gptresearcher/gpt-researcher:latest",
+            "resources": {
+              "cpu": "2",
+              "memory": "2Gi"
+            },
+            "environment_variables": [
+              {
+                "name": "OPENAI_API_KEY",
+                "value_from": "secret"
+              }
+            ]
+          },
+          "scaling": {
+            "min_instances": 0,
+            "max_instances": 10
+          }
+        }
+      }
+    },
+    "environment_templates": {
+      ".env.local": {
+        "description": "Local development environment",
+        "template": "# Local Development Environment\nOPENAI_API_KEY=your-openai-key\nTAVILY_API_KEY=your-tavily-key\nGROQ_API_KEY=your-groq-key\nRETRIEVER=tavily,duckduckgo\nFAST_LLM=groq:mixtral-8x7b-32768\nSMART_LLM=openai:gpt-4\nVERBOSE=true\n"
+      },
+      ".env.staging": {
+        "description": "Staging environment",
+        "template": "# Staging Environment\nOPENAI_API_KEY=${OPENAI_API_KEY}\nTAVILY_API_KEY=${TAVILY_API_KEY}\nGROQ_API_KEY=${GROQ_API_KEY}\nOPENROUTER_API_KEY=${OPENROUTER_API_KEY}\nRETRIEVER=tavily,google,bing\nFAST_LLM=groq:mixtral-8x7b-32768\nSMART_LLM=openai:gpt-4\nLOGGING_LEVEL=INFO\n"
+      },
+      ".env.production": {
+        "description": "Production environment",
+        "template": "# Production Environment\nOPENAI_API_KEY=${OPENAI_API_KEY}\nTAVILY_API_KEY=${TAVILY_API_KEY}\nANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}\nRETRIEVER=tavily,google,bing,serpapi\nFAST_LLM=anthropic:claude-3-haiku-20240307\nSMART_LLM=anthropic:claude-3-5-sonnet-20241022\nLANGCHAIN_TRACING_V2=true\nLOGGING_LEVEL=WARNING\nCURATE_SOURCES=true\n"
+      }
+    },
+    "monitoring_configuration": {
+      "health_checks": {
+        "liveness_probe": {
+          "http_get": {
+            "path": "/health",
+            "port": 8000
+          },
+          "initial_delay_seconds": 30,
+          "period_seconds": 10
+        },
+        "readiness_probe": {
+          "http_get": {
+            "path": "/health",
+            "port": 8000
+          },
+          "initial_delay_seconds": 5,
+          "period_seconds": 5
+        }
+      },
+      "metrics": {
+        "prometheus": {
+          "enabled": true,
+          "port": 9090,
+          "path": "/metrics"
+        },
+        "custom_metrics": [
+          "research_duration",
+          "api_response_time",
+          "source_retrieval_count",
+          "error_rate"
+        ]
+      },
+      "logging": {
+        "level": "INFO",
+        "format": "json",
+        "output": "stdout",
+        "retention": "7d"
+      }
+    },
+    "security_configuration": {
+      "api_authentication": {
+        "method": "api_key",
+        "header": "X-API-Key",
+        "rate_limiting": {
+          "requests_per_minute": 60,
+          "burst_size": 10
+        }
+      },
+      "network_security": {
+        "tls": {
+          "enabled": true,
+          "min_version": "1.2"
+        },
+        "cors": {
+          "allowed_origins": ["*"],
+          "allowed_methods": ["GET", "POST"],
+          "allowed_headers": ["*"]
+        }
+      },
+      "data_protection": {
+        "encryption_at_rest": true,
+        "encryption_in_transit": true,
+        "pii_scrubbing": true
+      }
+    }
+  }
+}

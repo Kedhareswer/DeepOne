@@ -1,0 +1,387 @@
+{
+  "component_registry": {
+    "metadata": {
+      "version": "1.0",
+      "last_updated": "2025-01-06",
+      "registry_type": "complete_system_components"
+    },
+    "core_agents": {
+      "planner_agent": {
+        "module": "gpt_researcher.skills.researcher",
+        "class": "PlannerAgent",
+        "responsibilities": [
+          "Query analysis and intent detection",
+          "Research question generation",
+          "Strategy planning and resource allocation",
+          "Subtopic identification and prioritization"
+        ],
+        "dependencies": {
+          "llm_provider": "smart_llm",
+          "prompt_templates": "planning_prompts",
+          "config": "global_config"
+        },
+        "inputs": ["user_query", "context_hints", "domain_knowledge"],
+        "outputs": ["research_plan", "sub_questions", "resource_requirements"],
+        "performance_metrics": ["planning_time", "question_relevance", "strategy_effectiveness"]
+      },
+      "execution_agent": {
+        "module": "gpt_researcher.skills.researcher",
+        "class": "ExecutionAgent",
+        "responsibilities": [
+          "Multi-source information retrieval",
+          "Content scraping and extraction",
+          "Quality assessment and filtering",
+          "Parallel processing coordination"
+        ],
+        "dependencies": {
+          "retriever_system": "configured_retrievers",
+          "scraping_engines": "all_scrapers",
+          "content_processors": "text_processors"
+        },
+        "concurrency": {
+          "max_instances": 15,
+          "load_balancing": "round_robin",
+          "failure_handling": "continue_with_available"
+        },
+        "performance_metrics": ["retrieval_speed", "success_rate", "content_quality"]
+      },
+      "writer_agent": {
+        "module": "gpt_researcher.skills.writer",
+        "class": "WriterAgent",
+        "responsibilities": [
+          "Content synthesis and analysis",
+          "Report structure creation",
+          "Citation management and formatting",
+          "Multi-format output generation"
+        ],
+        "dependencies": {
+          "llm_provider": "smart_llm",
+          "template_engine": "report_templates",
+          "citation_formatter": "citation_manager"
+        },
+        "output_formats": ["markdown", "pdf", "docx", "json", "html"],
+        "performance_metrics": ["writing_quality", "citation_accuracy", "generation_time"]
+      }
+    },
+    "service_components": {
+      "retriever_system": {
+        "module": "gpt_researcher.retrievers",
+        "interface": "RetrieverInterface",
+        "implementations": {
+          "tavily_search": {
+            "class": "TavilySearch",
+            "module": "gpt_researcher.retrievers.tavily.tavily_search",
+            "api_requirements": ["TAVILY_API_KEY"],
+            "features": ["web_search", "content_extraction", "real_time_data"],
+            "rate_limits": "configurable",
+            "cost": "per_request"
+          },
+          "duckduckgo_search": {
+            "class": "DuckDuckGoSearch",
+            "module": "gpt_researcher.retrievers.duckduckgo.duckduckgo_search",
+            "api_requirements": [],
+            "features": ["privacy_focused", "no_tracking", "free"],
+            "limitations": ["rate_limited", "no_api_key"]
+          },
+          "google_search": {
+            "class": "GoogleSearch",
+            "module": "gpt_researcher.retrievers.google.google",
+            "api_requirements": ["GOOGLE_API_KEY", "GOOGLE_CX_KEY"],
+            "features": ["high_quality", "custom_search", "comprehensive"],
+            "quota": "100_queries_per_day_free"
+          },
+          "bing_search": {
+            "class": "BingSearch",
+            "module": "gpt_researcher.retrievers.bing.bing_search",
+            "api_requirements": ["BING_API_KEY"],
+            "features": ["microsoft_integration", "real_time", "news_focus"]
+          },
+          "arxiv_search": {
+            "class": "ArxivSearch",
+            "module": "gpt_researcher.retrievers.arxiv.arxiv_search",
+            "api_requirements": [],
+            "features": ["academic_papers", "peer_reviewed", "scientific"],
+            "specialization": "research_papers"
+          }
+        }
+      },
+      "llm_provider_system": {
+        "module": "gpt_researcher.llm_provider.generic.base",
+        "class": "GenericLLMProvider",
+        "supported_providers": {
+          "openai": {
+            "module": "langchain_openai",
+            "class": "ChatOpenAI",
+            "models": ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "gpt-5", "o1-mini", "o3-mini"],
+            "features": ["reasoning", "writing", "analysis", "function_calling"],
+            "pricing": "premium",
+            "rate_limits": "tier_based"
+          },
+          "groq": {
+            "module": "langchain_groq",
+            "class": "ChatGroq",
+            "models": ["mixtral-8x7b-32768", "llama2-70b-4096", "gemma-7b-it"],
+            "features": ["high_speed", "cost_effective", "open_source"],
+            "pricing": "budget_friendly",
+            "specialty": "fast_inference"
+          },
+          "openrouter": {
+            "module": "langchain_openai",
+            "class": "ChatOpenAI",
+            "api_base": "https://openrouter.ai/api/v1",
+            "models": ["multiple_providers"],
+            "features": ["model_diversity", "fallback_options", "unified_api"],
+            "rate_limiting": "configurable_rps",
+            "specialty": "model_aggregation"
+          },
+          "anthropic": {
+            "module": "langchain_anthropic",
+            "class": "ChatAnthropic",
+            "models": ["claude-3-5-sonnet", "claude-3-haiku"],
+            "features": ["safety_focused", "reasoning", "long_context"],
+            "context_length": "200k_tokens"
+          }
+        }
+      },
+      "scraping_system": {
+        "module": "gpt_researcher.scraper",
+        "engines": {
+          "beautiful_soup": {
+            "class": "BeautifulSoupScraper",
+            "module": "gpt_researcher.scraper.beautiful_soup.beautiful_soup",
+            "use_cases": ["static_html", "basic_parsing", "fast_extraction"],
+            "performance": "fast",
+            "complexity": "low"
+          },
+          "browser_scraper": {
+            "class": "BrowserScraper",
+            "module": "gpt_researcher.scraper.browser.browser",
+            "use_cases": ["javascript_heavy", "dynamic_content", "spa_applications"],
+            "performance": "slow",
+            "complexity": "high",
+            "dependencies": ["playwright", "selenium"]
+          },
+          "tavily_extract": {
+            "class": "TavilyExtractScraper",
+            "module": "gpt_researcher.scraper.tavily_extract.tavily_extract",
+            "use_cases": ["ai_optimized", "clean_extraction", "content_focus"],
+            "performance": "balanced",
+            "api_dependency": "TAVILY_API_KEY"
+          },
+          "firecrawl": {
+            "class": "FirecrawlScraper",
+            "module": "gpt_researcher.scraper.firecrawl.firecrawl",
+            "use_cases": ["enterprise_scraping", "large_scale", "robust"],
+            "api_dependency": "FIRECRAWL_API_KEY"
+          }
+        }
+      }
+    },
+    "data_components": {
+      "vector_store": {
+        "module": "gpt_researcher.vector_store.vector_store",
+        "class": "VectorStore",
+        "implementations": {
+          "faiss": {
+            "backend": "FAISS",
+            "features": ["local_storage", "fast_similarity", "no_server"],
+            "scalability": "medium",
+            "persistence": "file_based"
+          },
+          "redis": {
+            "backend": "Redis",
+            "features": ["distributed", "fast_access", "persistence"],
+            "scalability": "high",
+            "dependencies": ["redis_server"]
+          }
+        }
+      },
+      "embedding_system": {
+        "module": "gpt_researcher.memory.embeddings",
+        "class": "Memory",
+        "providers": {
+          "openai": {
+            "models": ["text-embedding-3-large", "text-embedding-3-small"],
+            "dimensions": [3072, 1536],
+            "cost": "per_token"
+          },
+          "cohere": {
+            "models": ["embed-english-v3.0", "embed-multilingual-v3.0"],
+            "features": ["multilingual", "semantic_search"]
+          },
+          "huggingface": {
+            "models": ["sentence-transformers/all-MiniLM-L6-v2"],
+            "features": ["open_source", "local_deployment"]
+          }
+        }
+      },
+      "context_manager": {
+        "module": "gpt_researcher.skills.context_manager",
+        "class": "ContextManager",
+        "responsibilities": [
+          "Research state management",
+          "Content aggregation and filtering",
+          "Citation tracking and validation",
+          "Memory and context preservation"
+        ],
+        "storage_backends": ["memory", "file", "database"],
+        "compression": "intelligent_chunking"
+      }
+    },
+    "integration_components": {
+      "mcp_system": {
+        "module": "gpt_researcher.mcp",
+        "components": {
+          "mcp_client": {
+            "class": "MCPClient",
+            "module": "gpt_researcher.mcp.client",
+            "responsibilities": ["server_connection", "tool_discovery", "communication"]
+          },
+          "tool_selector": {
+            "class": "ToolSelector",
+            "module": "gpt_researcher.mcp.tool_selector",
+            "responsibilities": ["intelligent_tool_selection", "capability_matching"]
+          },
+          "mcp_streaming": {
+            "class": "MCPStreaming",
+            "module": "gpt_researcher.mcp.streaming",
+            "responsibilities": ["real_time_data", "streaming_responses"]
+          }
+        }
+      },
+      "websocket_manager": {
+        "module": "backend.server.websocket_manager",
+        "class": "WebSocketManager",
+        "responsibilities": [
+          "Real-time communication",
+          "Progress streaming",
+          "Connection management",
+          "Message queuing"
+        ],
+        "features": ["auto_reconnection", "message_persistence", "connection_pooling"]
+      },
+      "api_server": {
+        "module": "backend.server.server",
+        "framework": "FastAPI",
+        "components": {
+          "rest_endpoints": "HTTP API routes",
+          "websocket_endpoints": "WebSocket connections",
+          "middleware": "CORS, authentication, logging",
+          "static_files": "Frontend assets"
+        }
+      }
+    },
+    "utility_components": {
+      "configuration_system": {
+        "module": "gpt_researcher.config.config",
+        "class": "Config",
+        "responsibilities": [
+          "Environment variable parsing",
+          "Configuration validation",
+          "Provider management",
+          "Settings organization"
+        ],
+        "features": ["dynamic_loading", "validation", "fallbacks"]
+      },
+      "logging_system": {
+        "modules": [
+          "gpt_researcher.utils.logging_config",
+          "backend.server.logging_config"
+        ],
+        "features": ["structured_logging", "multi_output", "log_rotation"],
+        "formats": ["json", "text", "colored"]
+      },
+      "cost_tracking": {
+        "module": "gpt_researcher.utils.costs",
+        "class": "CostEstimator",
+        "responsibilities": [
+          "API usage tracking",
+          "Cost calculation",
+          "Budget monitoring",
+          "Usage analytics"
+        ]
+      },
+      "validators": {
+        "module": "gpt_researcher.utils.validators",
+        "classes": ["QueryValidator", "ContentValidator", "ConfigValidator"],
+        "responsibilities": ["input_validation", "data_verification", "security_checks"]
+      }
+    },
+    "testing_components": {
+      "test_framework": {
+        "framework": "pytest",
+        "test_types": [
+          "unit_tests",
+          "integration_tests",
+          "api_tests",
+          "performance_tests"
+        ],
+        "test_directories": [
+          "tests/",
+          "evals/"
+        ]
+      },
+      "evaluation_system": {
+        "module": "evals",
+        "components": {
+          "simple_evals": "Basic evaluation framework",
+          "hallucination_eval": "Accuracy assessment",
+          "performance_eval": "Speed and efficiency testing"
+        }
+      }
+    },
+    "deployment_components": {
+      "containerization": {
+        "docker": {
+          "main_dockerfile": "Dockerfile",
+          "compose_file": "docker-compose.yml",
+          "images": [
+            "gptresearcher/gpt-researcher",
+            "gptresearcher/gptr-nextjs"
+          ]
+        }
+      },
+      "orchestration": {
+        "kubernetes": {
+          "manifests": ["deployment.yaml", "service.yaml", "ingress.yaml"],
+          "config_maps": "Configuration management",
+          "secrets": "API key management"
+        }
+      }
+    },
+    "frontend_components": {
+      "lightweight_frontend": {
+        "location": "frontend/",
+        "technologies": ["HTML5", "CSS3", "JavaScript", "Bootstrap"],
+        "features": ["basic_ui", "websocket_integration", "progress_display"]
+      },
+      "nextjs_frontend": {
+        "location": "frontend/nextjs/",
+        "technologies": ["Next.js", "TypeScript", "Tailwind CSS", "React"],
+        "features": ["advanced_ui", "real_time_updates", "responsive_design"]
+      }
+    },
+    "dependency_matrix": {
+      "core_dependencies": {
+        "python": ">=3.11",
+        "fastapi": ">=0.104.1",
+        "langchain": "^0.3.18",
+        "aiohttp": ">=3.12.0",
+        "beautifulsoup4": ">=4.12.2",
+        "pydantic": ">=2.5.1"
+      },
+      "llm_dependencies": {
+        "langchain-openai": "^0.3.6",
+        "langchain-groq": "latest",
+        "langchain-anthropic": "latest",
+        "openai": ">=1.3.3"
+      },
+      "optional_dependencies": {
+        "playwright": "browser scraping",
+        "selenium": "web automation",
+        "redis": "caching backend",
+        "docker": "containerization"
+      }
+    }
+  }
+}

@@ -1,0 +1,488 @@
+{
+  "system_schema": {
+    "metadata": {
+      "schema_version": "2.0",
+      "last_updated": "2025-01-06",
+      "compatibility": "gpt-researcher-0.14.3+"
+    },
+    "core_components": {
+      "agent_orchestrator": {
+        "class_name": "AgentOrchestrator",
+        "module_path": "gpt_researcher.agent",
+        "dependencies": [
+          "planner_agent",
+          "execution_agents",
+          "writer_agent",
+          "context_manager"
+        ],
+        "interfaces": {
+          "input": "ResearchRequest",
+          "output": "ResearchResponse",
+          "streaming": "WebSocket"
+        },
+        "configuration": {
+          "max_concurrent_tasks": 10,
+          "timeout_minutes": 30,
+          "retry_attempts": 3
+        }
+      },
+      "planner_agent": {
+        "class_name": "PlannerAgent",
+        "module_path": "gpt_researcher.skills.researcher",
+        "llm_requirements": {
+          "model_type": "smart_llm",
+          "min_context_length": 4000,
+          "capabilities": ["reasoning", "planning"]
+        },
+        "outputs": {
+          "research_questions": "List[str]",
+          "strategy": "ResearchStrategy",
+          "resource_allocation": "ResourcePlan"
+        }
+      },
+      "execution_agents": {
+        "class_name": "ExecutionAgent",
+        "module_path": "gpt_researcher.skills.researcher",
+        "pool_configuration": {
+          "max_agents": 15,
+          "load_balancing": "round_robin",
+          "failure_tolerance": "continue_on_partial_failure"
+        },
+        "capabilities": [
+          "multi_source_search",
+          "content_scraping",
+          "quality_assessment",
+          "parallel_processing"
+        ]
+      },
+      "writer_agent": {
+        "class_name": "WriterAgent",
+        "module_path": "gpt_researcher.skills.writer",
+        "llm_requirements": {
+          "model_type": "smart_llm",
+          "min_context_length": 6000,
+          "capabilities": ["writing", "synthesis", "citation"]
+        },
+        "output_formats": [
+          "markdown",
+          "pdf",
+          "docx",
+          "json"
+        ]
+      }
+    },
+    "service_layer": {
+      "retriever_system": {
+        "interface": "RetrieverInterface",
+        "implementations": {
+          "tavily": {
+            "class": "TavilySearch",
+            "module": "gpt_researcher.retrievers.tavily",
+            "api_requirements": ["TAVILY_API_KEY"],
+            "features": ["web_search", "content_extraction", "real_time"]
+          },
+          "duckduckgo": {
+            "class": "DuckDuckGoSearch",
+            "module": "gpt_researcher.retrievers.duckduckgo",
+            "api_requirements": [],
+            "features": ["web_search", "privacy_focused"]
+          },
+          "google": {
+            "class": "GoogleSearch",
+            "module": "gpt_researcher.retrievers.google",
+            "api_requirements": ["GOOGLE_API_KEY", "GOOGLE_CX_KEY"],
+            "features": ["web_search", "custom_search"]
+          },
+          "groq": {
+            "class": "ChatGroq",
+            "module": "langchain_groq",
+            "api_requirements": ["GROQ_API_KEY"],
+            "features": ["high_speed_inference", "cost_effective"]
+          },
+          "openrouter": {
+            "class": "ChatOpenAI",
+            "module": "langchain_openai",
+            "api_requirements": ["OPENROUTER_API_KEY"],
+            "features": ["multi_model_access", "rate_limiting"],
+            "configuration": {
+              "base_url": "https://openrouter.ai/api/v1",
+              "rate_limit_rps": 1
+            }
+          }
+        }
+      },
+      "llm_provider_system": {
+        "supported_providers": {
+          "openai": {
+            "models": ["gpt-4", "gpt-3.5-turbo", "gpt-4-turbo"],
+            "features": ["reasoning", "writing", "analysis"],
+            "pricing_tier": "premium"
+          },
+          "anthropic": {
+            "models": ["claude-3-sonnet", "claude-3-haiku"],
+            "features": ["reasoning", "writing", "safety"],
+            "pricing_tier": "premium"
+          },
+          "groq": {
+            "models": ["mixtral-8x7b", "llama2-70b"],
+            "features": ["speed", "cost_effective"],
+            "pricing_tier": "budget"
+          },
+          "openrouter": {
+            "models": ["multiple_providers"],
+            "features": ["model_diversity", "fallback"],
+            "pricing_tier": "variable"
+          }
+        }
+      },
+      "scraping_system": {
+        "engines": {
+          "beautiful_soup": {
+            "class": "BeautifulSoupScraper",
+            "use_cases": ["static_html", "basic_parsing"],
+            "performance": "fast"
+          },
+          "browser": {
+            "class": "BrowserScraper",
+            "use_cases": ["javascript_heavy", "dynamic_content"],
+            "performance": "slow_but_comprehensive"
+          },
+          "tavily_extract": {
+            "class": "TavilyExtractScraper",
+            "use_cases": ["ai_optimized", "clean_extraction"],
+            "performance": "balanced"
+          }
+        }
+      }
+    },
+    "data_models": {
+      "research_request": {
+        "schema": {
+          "task": {
+            "type": "string",
+            "description": "Research query or topic",
+            "required": true
+          },
+          "report_type": {
+            "type": "string",
+            "enum": ["research_report", "detailed_report", "basic_report"],
+            "default": "research_report"
+          },
+          "report_source": {
+            "type": "string",
+            "enum": ["web", "local", "hybrid"],
+            "default": "web"
+          },
+          "tone": {
+            "type": "string",
+            "enum": ["objective", "formal", "analytical"],
+            "default": "objective"
+          },
+          "headers": {
+            "type": "object",
+            "description": "Additional request headers"
+          }
+        }
+      },
+      "research_response": {
+        "schema": {
+          "research_id": {
+            "type": "string",
+            "description": "Unique identifier for research task"
+          },
+          "report": {
+            "type": "string",
+            "description": "Generated research report in markdown"
+          },
+          "research_information": {
+            "type": "object",
+            "properties": {
+              "source_urls": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "research_costs": {
+                "type": "number",
+                "description": "Estimated cost in USD"
+              },
+              "visited_urls": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "research_images": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            }
+          },
+          "file_paths": {
+            "type": "object",
+            "properties": {
+              "pdf_path": {"type": "string"},
+              "docx_path": {"type": "string"}
+            }
+          }
+        }
+      },
+      "configuration": {
+        "schema": {
+          "retriever": {
+            "type": "string",
+            "description": "Comma-separated list of retrievers",
+            "default": "tavily"
+          },
+          "fast_llm": {
+            "type": "string",
+            "format": "provider:model",
+            "example": "openai:gpt-3.5-turbo"
+          },
+          "smart_llm": {
+            "type": "string",
+            "format": "provider:model",
+            "example": "openai:gpt-4"
+          },
+          "embedding": {
+            "type": "string",
+            "format": "provider:model",
+            "example": "openai:text-embedding-3-small"
+          },
+          "max_search_results_per_query": {
+            "type": "integer",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 20
+          },
+          "total_words": {
+            "type": "integer",
+            "default": 1200,
+            "minimum": 500,
+            "maximum": 5000
+          }
+        }
+      }
+    },
+    "api_interfaces": {
+      "rest_api": {
+        "base_url": "http://localhost:8000",
+        "endpoints": {
+          "/report/": {
+            "method": "POST",
+            "description": "Generate research report",
+            "request_body": "ResearchRequest",
+            "responses": {
+              "200": "ResearchResponse",
+              "400": "ValidationError",
+              "500": "InternalError"
+            }
+          },
+          "/report/{research_id}": {
+            "method": "GET",
+            "description": "Download report file",
+            "parameters": {
+              "research_id": {
+                "type": "string",
+                "location": "path"
+              }
+            },
+            "responses": {
+              "200": "File download",
+              "404": "Report not found"
+            }
+          },
+          "/files/": {
+            "method": "GET",
+            "description": "List uploaded files",
+            "responses": {
+              "200": "FileList"
+            }
+          },
+          "/upload/": {
+            "method": "POST",
+            "description": "Upload document file",
+            "request_body": "multipart/form-data",
+            "responses": {
+              "200": "UploadResponse"
+            }
+          }
+        }
+      },
+      "websocket_api": {
+        "endpoint": "/ws",
+        "message_types": {
+          "status": {
+            "type": "object",
+            "properties": {
+              "type": {"const": "status"},
+              "message": {"type": "string"}
+            }
+          },
+          "logs": {
+            "type": "object",
+            "properties": {
+              "type": {"const": "logs"},
+              "content": {"type": "string"},
+              "output": {"type": "string"}
+            }
+          },
+          "report": {
+            "type": "object",
+            "properties": {
+              "type": {"const": "report"},
+              "output": {"type": "string"}
+            }
+          },
+          "path": {
+            "type": "object",
+            "properties": {
+              "type": {"const": "path"},
+              "output": {
+                "type": "object",
+                "properties": {
+                  "pdf": {"type": "string"},
+                  "docx": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "environment_variables": {
+      "required": {
+        "OPENAI_API_KEY": {
+          "description": "OpenAI API key for LLM services",
+          "type": "string",
+          "sensitive": true
+        },
+        "TAVILY_API_KEY": {
+          "description": "Tavily API key for web search",
+          "type": "string",
+          "sensitive": true
+        }
+      },
+      "optional": {
+        "GROQ_API_KEY": {
+          "description": "Groq API key for high-speed inference",
+          "type": "string",
+          "sensitive": true
+        },
+        "OPENROUTER_API_KEY": {
+          "description": "OpenRouter API key for multi-model access",
+          "type": "string",
+          "sensitive": true
+        },
+        "OPENROUTER_LIMIT_RPS": {
+          "description": "OpenRouter rate limit (requests per second)",
+          "type": "string",
+          "default": "1"
+        },
+        "GOOGLE_API_KEY": {
+          "description": "Google Custom Search API key",
+          "type": "string",
+          "sensitive": true
+        },
+        "GOOGLE_CX_KEY": {
+          "description": "Google Custom Search Engine ID",
+          "type": "string",
+          "sensitive": true
+        },
+        "ANTHROPIC_API_KEY": {
+          "description": "Anthropic API key for Claude models",
+          "type": "string",
+          "sensitive": true
+        },
+        "RETRIEVER": {
+          "description": "Comma-separated list of retrievers to use",
+          "type": "string",
+          "default": "tavily",
+          "example": "tavily,duckduckgo,google"
+        },
+        "DOC_PATH": {
+          "description": "Path to local documents folder",
+          "type": "string",
+          "default": "./my-docs"
+        },
+        "FAST_LLM": {
+          "description": "Fast LLM configuration",
+          "type": "string",
+          "format": "provider:model",
+          "default": "openai:gpt-3.5-turbo"
+        },
+        "SMART_LLM": {
+          "description": "Smart LLM configuration",
+          "type": "string",
+          "format": "provider:model",
+          "default": "openai:gpt-4"
+        },
+        "EMBEDDING": {
+          "description": "Embedding model configuration",
+          "type": "string",
+          "format": "provider:model",
+          "default": "openai:text-embedding-3-small"
+        }
+      }
+    },
+    "file_structure": {
+      "root_directory": "gpt-researcher/",
+      "key_directories": {
+        "gpt_researcher/": "Core application code",
+        "backend/": "Backend server implementation",
+        "frontend/": "Frontend interface files",
+        "multi_agents/": "Multi-agent system implementation",
+        "tests/": "Test files and test data",
+        "docs/": "Documentation and guides",
+        "PRD/": "Product Requirements Documentation"
+      },
+      "critical_files": {
+        "main.py": "Application entry point",
+        "requirements.txt": "Python dependencies",
+        "docker-compose.yml": "Container orchestration",
+        "pyproject.toml": "Project configuration",
+        ".env.example": "Environment variable template"
+      }
+    },
+    "deployment_configurations": {
+      "local_development": {
+        "requirements": [
+          "Python 3.11+",
+          "pip package manager",
+          "Environment variables configured"
+        ],
+        "commands": [
+          "pip install -r requirements.txt",
+          "python -m uvicorn main:app --reload"
+        ],
+        "ports": {
+          "8000": "FastAPI server",
+          "3000": "NextJS frontend (optional)"
+        }
+      },
+      "docker_deployment": {
+        "requirements": [
+          "Docker",
+          "Docker Compose",
+          ".env file with API keys"
+        ],
+        "commands": [
+          "docker-compose up --build"
+        ],
+        "services": {
+          "gpt-researcher": "Main application",
+          "gptr-nextjs": "Frontend interface"
+        }
+      },
+      "production_deployment": {
+        "requirements": [
+          "Kubernetes cluster",
+          "Persistent volumes",
+          "Load balancer",
+          "SSL certificates"
+        ],
+        "scaling": {
+          "horizontal": "Multiple pod replicas",
+          "vertical": "Resource limits per pod"
+        }
+      }
+    }
+  }
+}

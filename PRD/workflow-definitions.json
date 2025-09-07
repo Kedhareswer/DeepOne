@@ -1,0 +1,313 @@
+{
+  "workflow_definitions": {
+    "metadata": {
+      "version": "1.0",
+      "last_updated": "2025-01-06",
+      "schema_version": "2.0"
+    },
+    "core_workflows": {
+      "research_workflow": {
+        "id": "research_001",
+        "name": "Complete Research Workflow",
+        "description": "End-to-end research process from query to report",
+        "steps": [
+          {
+            "step_id": "query_processing",
+            "name": "Query Processing",
+            "type": "preprocessing",
+            "components": ["QueryProcessor", "QueryValidator"],
+            "inputs": ["user_query", "optional_parameters"],
+            "outputs": ["structured_query", "research_context"],
+            "duration_estimate": "5-10 seconds",
+            "error_handling": "retry_with_fallback"
+          },
+          {
+            "step_id": "research_planning",
+            "name": "Research Planning",
+            "type": "planning",
+            "components": ["PlannerAgent", "QuestionGenerator"],
+            "inputs": ["structured_query", "research_context"],
+            "outputs": ["research_plan", "sub_questions"],
+            "duration_estimate": "10-30 seconds",
+            "error_handling": "fallback_to_simple_plan"
+          },
+          {
+            "step_id": "parallel_execution",
+            "name": "Parallel Information Gathering",
+            "type": "execution",
+            "components": ["ExecutionAgents", "RetrieverSystem", "ScrapingEngines"],
+            "inputs": ["research_plan", "sub_questions"],
+            "outputs": ["raw_content", "source_metadata"],
+            "duration_estimate": "60-120 seconds",
+            "concurrency": "15_max_workers",
+            "error_handling": "continue_with_available_sources"
+          },
+          {
+            "step_id": "content_processing",
+            "name": "Content Analysis and Processing",
+            "type": "processing",
+            "components": ["ContentProcessor", "ContextManager", "CitationTracker"],
+            "inputs": ["raw_content", "source_metadata"],
+            "outputs": ["processed_content", "relevance_scores"],
+            "duration_estimate": "30-60 seconds",
+            "error_handling": "skip_invalid_content"
+          },
+          {
+            "step_id": "report_generation",
+            "name": "Report Writing and Generation",
+            "type": "generation",
+            "components": ["WriterAgent", "TemplateEngine", "CitationFormatter"],
+            "inputs": ["processed_content", "relevance_scores"],
+            "outputs": ["research_report", "citations"],
+            "duration_estimate": "45-90 seconds",
+            "error_handling": "generate_with_available_content"
+          },
+          {
+            "step_id": "output_formatting",
+            "name": "Multi-format Output Generation",
+            "type": "postprocessing",
+            "components": ["FormatConverter", "PDFGenerator", "WordExporter"],
+            "inputs": ["research_report", "citations"],
+            "outputs": ["markdown_report", "pdf_file", "docx_file"],
+            "duration_estimate": "10-20 seconds",
+            "error_handling": "fallback_to_markdown"
+          }
+        ],
+        "total_duration_estimate": "180-330 seconds",
+        "success_criteria": [
+          "report_length_minimum_500_words",
+          "minimum_3_sources",
+          "all_citations_valid"
+        ]
+      },
+      "deep_research_workflow": {
+        "id": "deep_research_001",
+        "name": "Deep Research Workflow",
+        "description": "Advanced recursive research with tree exploration",
+        "steps": [
+          {
+            "step_id": "initial_exploration",
+            "name": "Initial Topic Exploration",
+            "type": "exploration",
+            "components": ["DeepResearchAgent", "TopicExpander"],
+            "inputs": ["research_query", "depth_config", "breadth_config"],
+            "outputs": ["topic_tree", "exploration_paths"],
+            "duration_estimate": "30-60 seconds"
+          },
+          {
+            "step_id": "recursive_research",
+            "name": "Recursive Research Execution",
+            "type": "recursive_execution",
+            "components": ["RecursiveAgent", "PathExplorer"],
+            "inputs": ["topic_tree", "exploration_paths"],
+            "outputs": ["detailed_findings", "cross_references"],
+            "duration_estimate": "180-300 seconds",
+            "recursion_depth": "configurable_1_to_5"
+          },
+          {
+            "step_id": "synthesis",
+            "name": "Deep Research Synthesis",
+            "type": "synthesis",
+            "components": ["SynthesisAgent", "CrossReferenceAnalyzer"],
+            "inputs": ["detailed_findings", "cross_references"],
+            "outputs": ["comprehensive_report", "insights"],
+            "duration_estimate": "60-120 seconds"
+          }
+        ],
+        "total_duration_estimate": "270-480 seconds",
+        "configuration": {
+          "depth": "1-5",
+          "breadth": "1-10",
+          "concurrency": "4_default"
+        }
+      }
+    },
+    "agent_workflows": {
+      "planner_agent": {
+        "id": "agent_planner_001",
+        "responsibilities": ["query_analysis", "question_generation", "strategy_planning"],
+        "inputs": ["user_query", "context_hints"],
+        "outputs": ["research_strategy", "sub_questions", "resource_allocation"],
+        "llm_requirements": {
+          "model_type": "smart_llm",
+          "min_context_length": 4000,
+          "reasoning_capability": "required"
+        },
+        "workflow": [
+          "analyze_query_intent",
+          "identify_research_domains",
+          "generate_sub_questions",
+          "prioritize_questions",
+          "create_execution_plan"
+        ]
+      },
+      "execution_agent": {
+        "id": "agent_execution_001",
+        "responsibilities": ["information_retrieval", "content_scraping", "quality_filtering"],
+        "inputs": ["research_question", "source_list", "search_parameters"],
+        "outputs": ["retrieved_content", "source_metadata", "quality_scores"],
+        "concurrency": "15_max_concurrent",
+        "workflow": [
+          "select_appropriate_retriever",
+          "execute_search_query",
+          "scrape_content_parallel",
+          "apply_quality_filters",
+          "extract_relevant_information"
+        ]
+      },
+      "writer_agent": {
+        "id": "agent_writer_001",
+        "responsibilities": ["content_synthesis", "report_writing", "citation_management"],
+        "inputs": ["processed_content", "research_context", "output_requirements"],
+        "outputs": ["structured_report", "formatted_citations", "quality_metrics"],
+        "llm_requirements": {
+          "model_type": "smart_llm",
+          "min_context_length": 6000,
+          "writing_capability": "advanced"
+        },
+        "workflow": [
+          "create_report_outline",
+          "write_introduction",
+          "develop_main_sections",
+          "integrate_citations",
+          "write_conclusion",
+          "format_final_report"
+        ]
+      }
+    },
+    "integration_workflows": {
+      "mcp_integration": {
+        "id": "mcp_integration_001",
+        "name": "Model Context Protocol Integration",
+        "components": ["MCPClient", "ToolSelector", "MCPStreaming"],
+        "workflow": [
+          {
+            "step": "server_discovery",
+            "action": "discover_available_mcp_servers",
+            "timeout": "10_seconds"
+          },
+          {
+            "step": "tool_registration",
+            "action": "register_available_tools",
+            "validation": "required"
+          },
+          {
+            "step": "context_integration",
+            "action": "integrate_mcp_context_with_research",
+            "priority": "high"
+          }
+        ]
+      },
+      "websocket_streaming": {
+        "id": "websocket_001",
+        "name": "Real-time Progress Streaming",
+        "components": ["WebSocketManager", "ProgressTracker", "EventDispatcher"],
+        "events": [
+          "research_started",
+          "planning_complete",
+          "sources_retrieved",
+          "content_processed",
+          "report_generated",
+          "research_complete"
+        ],
+        "message_format": {
+          "type": "string",
+          "timestamp": "iso_8601",
+          "progress": "percentage",
+          "message": "string",
+          "data": "optional_object"
+        }
+      }
+    },
+    "error_handling_workflows": {
+      "api_failure_recovery": {
+        "triggers": ["api_timeout", "rate_limit_exceeded", "authentication_error"],
+        "actions": [
+          "log_error_with_context",
+          "check_retry_policy",
+          "implement_exponential_backoff",
+          "fallback_to_alternative_provider",
+          "notify_monitoring_system"
+        ],
+        "retry_policy": {
+          "max_retries": 3,
+          "backoff_multiplier": 2,
+          "initial_delay": "1_second"
+        }
+      },
+      "content_processing_errors": {
+        "triggers": ["scraping_failure", "parsing_error", "content_validation_failure"],
+        "actions": [
+          "categorize_error_type",
+          "attempt_alternative_scraper",
+          "skip_problematic_source",
+          "continue_with_available_content",
+          "update_quality_metrics"
+        ]
+      }
+    },
+    "monitoring_workflows": {
+      "performance_tracking": {
+        "metrics": [
+          "research_duration",
+          "source_retrieval_success_rate",
+          "content_quality_score",
+          "citation_accuracy",
+          "user_satisfaction"
+        ],
+        "collection_frequency": "per_request",
+        "storage": "time_series_database"
+      },
+      "quality_assurance": {
+        "checks": [
+          "minimum_word_count",
+          "source_diversity",
+          "citation_validation",
+          "content_relevance",
+          "factual_accuracy"
+        ],
+        "thresholds": {
+          "minimum_sources": 3,
+          "minimum_words": 500,
+          "relevance_score": 0.7,
+          "citation_accuracy": 0.95
+        }
+      }
+    }
+  },
+  "state_transitions": {
+    "research_states": [
+      "initialized",
+      "planning",
+      "executing",
+      "processing",
+      "writing",
+      "formatting",
+      "completed",
+      "failed"
+    ],
+    "valid_transitions": {
+      "initialized": ["planning", "failed"],
+      "planning": ["executing", "failed"],
+      "executing": ["processing", "failed"],
+      "processing": ["writing", "failed"],
+      "writing": ["formatting", "failed"],
+      "formatting": ["completed", "failed"],
+      "completed": [],
+      "failed": ["initialized"]
+    }
+  },
+  "resource_management": {
+    "concurrent_limits": {
+      "max_execution_agents": 15,
+      "max_scraping_workers": 10,
+      "max_llm_requests": 5,
+      "max_mcp_connections": 3
+    },
+    "memory_management": {
+      "max_context_size": "32000_tokens",
+      "content_chunking": "8192_chars",
+      "cache_retention": "1_hour"
+    }
+  }
+}
