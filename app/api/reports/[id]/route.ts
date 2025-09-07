@@ -3,11 +3,14 @@ import path from "path";
 
 export const runtime = "nodejs";
 
+import { NextResponse } from "next/server";
+
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } },
+  ctx: RouteContext<'/api/reports/[id]'>
 ) {
-  const fileId = params.id;
+  const { id } = await ctx.params;
+  const fileId = id;
   const outDir = path.join(process.cwd(), "outputs", "reports");
   const full = path.join(outDir, fileId);
   try {
@@ -15,15 +18,15 @@ export async function GET(
     const contentType = full.endsWith(".md")
       ? "text/markdown; charset=utf-8"
       : "application/octet-stream";
-    return new Response(data, {
+    return new NextResponse(data, {
       status: 200,
       headers: {
         "Content-Type": contentType,
         "Content-Disposition": `inline; filename="${fileId}"`,
       },
     });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message || String(e) }), {
+  } catch (e: unknown) {
+    return new NextResponse(JSON.stringify({ error: (e as Error)?.message || String(e) }), {
       status: 404,
       headers: { "Content-Type": "application/json" },
     });

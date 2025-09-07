@@ -115,8 +115,8 @@ export const Assistant = () => {
                           .map((pid) => PROVIDERS.find((p) => p.id === pid))
                           .filter(Boolean)
                           .map((p) => (
-                            <option key={(p as any).id} value={(p as any).id}>
-                              {(p as any).label}
+                            <option key={p!.id} value={p!.id}>
+                              {p!.label}
                             </option>
                           ))
                       : null}

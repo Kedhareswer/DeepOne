@@ -23,8 +23,8 @@ export async function GET() {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message || String(e) }), {
+  } catch (e: unknown) {
+    return new Response(JSON.stringify({ error: (e as Error)?.message || String(e) }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });

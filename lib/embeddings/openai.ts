@@ -23,7 +23,7 @@ export async function embedTexts(
     });
     if (!res.ok) throw new Error(`OpenAI embeddings error ${res.status}`);
     const json = await res.json();
-    const vectors: number[][] = json.data.map((d: any) => d.embedding);
+    const vectors: number[][] = json.data.map((d: { embedding: number[] }) => d.embedding);
     out.push(...vectors);
   }
   return out;

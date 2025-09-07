@@ -18,7 +18,7 @@ export async function retrieveWithFallback(
   retrievers: { name: string; fn: RetrieverFn; rps?: number; burst?: number }[],
   opts: RetrieverOptions = {},
 ): Promise<RetrieverResponse & { from: string } | null> {
-  const errors: any[] = [];
+  const errors: unknown[] = [];
   for (const r of retrievers) {
     try {
       if (!allow(r.name, r.rps ?? 2, r.burst ?? 5)) {

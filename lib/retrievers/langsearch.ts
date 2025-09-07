@@ -33,14 +33,18 @@ export const langSearchRetriever: RetrieverFn = async (
       const text = await res.text().catch(() => "");
       throw new Error(`LangSearch error ${res.status}: ${text}`);
     }
-    const json: any = await res.json();
-    const values: any[] = json?.webPages?.value || [];
-    const results = values.map((v) => ({
-      title: String(v.name || v.title || v.displayUrl || "Untitled"),
-      url: String(v.url || v.webSearchUrl || ""),
-      content: String(v.summary || v.snippet || ""),
-      score: undefined,
-    })).filter((r) => r.url);
+    const json: { webPages?: { value?: unknown[] } } = await res.json();
+    const values: unknown[] = json?.webPages?.value || [];
+    const results = values.map((v) => {
+      type LangWebPage = { name?: string; title?: string; displayUrl?: string; url?: string; webSearchUrl?: string; summary?: string; snippet?: string };
+      const item = v as LangWebPage;
+      return {
+        title: String(item.name || item.title || item.displayUrl || "Untitled"),
+        url: String(item.url || item.webSearchUrl || ""),
+        content: String(item.summary || item.snippet || ""),
+        score: undefined,
+      };
+    }).filter((r) => r.url);
 
     return { provider: "langsearch", query, results };
   } finally {

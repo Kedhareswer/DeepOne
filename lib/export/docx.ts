@@ -3,13 +3,13 @@ import path from "path";
 
 export async function exportDocxFromMarkdown(markdown: string, outPath: string): Promise<string> {
   await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
-  const mod: any = await import("docx").catch(() => null);
+  const mod = await import("docx").catch(() => null);
   if (!mod) {
     throw new Error("docx is not installed. Run: npm i docx");
     }
   const { Document, Packer, Paragraph, HeadingLevel, TextRun } = mod;
 
-  const paragraphs: any[] = [];
+    const paragraphs: InstanceType<typeof Paragraph>[] = [];
   const lines = markdown.split(/\n/);
   let inCode = false;
   for (const line of lines) {

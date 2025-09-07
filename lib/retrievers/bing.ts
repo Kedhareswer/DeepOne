@@ -25,15 +25,18 @@ export const bingRetriever: RetrieverFn = async (query, opts = {}) => {
     if (!res.ok) throw new Error(`bing http ${res.status}`);
     const json = await res.json();
 
-    const items: any[] = json.webPages?.value || [];
+    type BingWebPage = { name: string; url: string; snippet?: string };
+    const items: BingWebPage[] = (json.webPages?.value || []) as BingWebPage[];
     return {
       provider: "bing",
       query,
-      results: items.slice(0, max).map((it) => ({
-        title: it.name,
-        url: it.url,
-        content: it.snippet,
-      })),
+      results: items.slice(0, max).map((item) => {
+        return {
+          title: item.name,
+          url: item.url,
+          content: item.snippet,
+        };
+      }),
     } satisfies RetrieverResponse;
   } finally {
     clearTimeout(to);

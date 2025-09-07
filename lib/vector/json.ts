@@ -6,7 +6,7 @@ export type VectorItem = {
   id: string;
   text: string;
   embedding: number[];
-  meta?: Record<string, any>;
+  meta?: Record<string, unknown>;
 };
 
 export type VectorIndex = {
@@ -35,7 +35,7 @@ export async function saveIndex(index: VectorIndex, indexPath: string = DEFAULT_
 }
 
 export async function addDocuments(
-  docs: { id: string; text: string; meta?: Record<string, any> }[],
+  docs: { id: string; text: string; meta?: Record<string, unknown> }[],
   indexPath: string = DEFAULT_INDEX_PATH,
 ) {
   const index = await loadIndex(indexPath);

@@ -37,19 +37,19 @@ function chunkText(text: string, maxLen = 1200): string[] {
 async function extractText(file: string, ext: string): Promise<string | null> {
   try {
     if (ext === ".pdf") {
-      // @ts-ignore - optional dependency
+      // @ts-expect-error - optional dependency
       const pdfParse = (await import("pdf-parse")).default ?? (await import("pdf-parse"));
       const buf = await fs.readFile(file);
       const out = await pdfParse(buf);
       return String(out.text || "").trim();
     }
     if (ext === ".docx") {
-      // @ts-ignore - optional dependency
       const mammoth = await import("mammoth").catch(() => null);
       if (!mammoth) return null;
       const buf = await fs.readFile(file);
       const arrayBuffer = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-      const res = await mammoth.extractRawText({ arrayBuffer } as any);
+      // @ts-expect-error - mammoth types issue with ArrayBuffer vs SharedArrayBuffer
+      const res = await mammoth.extractRawText({ arrayBuffer });
       return String(res.value || "").trim();
     }
   } catch {
@@ -61,7 +61,7 @@ async function extractText(file: string, ext: string): Promise<string | null> {
 export async function ingestLocalDocs(rootDir: string): Promise<{ files: number; chunks: number }> {
   let files = 0;
   let chunksTotal = 0;
-  const docs: { id: string; text: string; meta?: Record<string, any> }[] = [];
+  const docs: { id: string; text: string; meta?: Record<string, unknown> }[] = [];
 
   for await (const file of walk(rootDir)) {
     const ext = path.extname(file).toLowerCase();

@@ -16,8 +16,8 @@ export async function POST(req: Request) {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ ok: false, error: e?.message || String(e) }), {
+  } catch (e: unknown) {
+    return new Response(JSON.stringify({ ok: false, error: (e as Error)?.message || String(e) }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
@@ -33,8 +33,8 @@ export async function GET(req: Request) {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (e: any) {
-    return new Response(JSON.stringify({ ok: false, error: e?.message || String(e) }), {
+  } catch (e: unknown) {
+    return new Response(JSON.stringify({ ok: false, error: (e as Error)?.message || String(e) }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });

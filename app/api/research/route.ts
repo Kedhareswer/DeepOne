@@ -44,7 +44,6 @@ async function selectModel(provider: string, model: string) {
     return createOpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: "https://api.groq.com/openai" })(model);
   if (provider === "anthropic") {
     try {
-      // @ts-ignore: optional dependency, imported dynamically
       const mod = await import("@ai-sdk/anthropic");
       return mod.anthropic(model);
     } catch {
@@ -84,14 +83,14 @@ async function selectModel(provider: string, model: string) {
   throw new Error(`Unsupported provider: ${provider}. Check your provider selection.`);
 }
 
-async function plannerAgent(modelFn: any, task: string): Promise<Plan> {
+async function plannerAgent(modelFn: ReturnType<typeof openai>, task: string): Promise<Plan> {
   const prompt = `You are the Planner Agent. Break the task into 3-5 concrete sub-questions optimal for web+document research. Reply ONLY in compact JSON with keys {"subQuestions": string[], "notes": string}.
 Task: ${task}`;
   const res = await generateText({ model: modelFn, prompt });
   const text = res.text ?? "";
   try {
     const json = JSON.parse(text);
-    const subs = Array.isArray(json.subQuestions) ? json.subQuestions.map((s: any) => String(s)).filter(Boolean) : [];
+    const subs = Array.isArray(json.subQuestions) ? json.subQuestions.map((s: unknown) => String(s)).filter(Boolean) : [];
     return { subQuestions: subs.slice(0, 6), notes: typeof json.notes === "string" ? json.notes : undefined };
   } catch {
     // fallback: split by newline
@@ -135,7 +134,7 @@ async function executeRetrieval(subQuestions: string[], maxResults: number, time
   return aggregated.slice(0, maxResults * Math.max(1, subQuestions.length));
 }
 
-async function writerAgent(modelFn: any, task: string, language: string, reportType: string, totalWords: number, sources: { title: string; url: string; content?: string }[]) {
+async function writerAgent(modelFn: ReturnType<typeof openai>, task: string, language: string, reportType: string, totalWords: number, sources: { title: string; url: string; content?: string }[]) {
   const refs = sources.map((s, i) => `[${i + 1}] ${s.title} — ${s.url}`).join("\n");
   const prompt = `You are the Writer Agent for DeepOne. Write a ${reportType.replace(/_/g, " ")} in ${language} of about ${totalWords} words.
 Use ONLY the following sources as factual grounding. Attribute claims with bracket citations like [1], [2]. Do NOT include a References section; it will be appended programmatically.
@@ -256,7 +255,7 @@ export async function POST(req: Request) {
       const pdfPath = path.join(outDir, `${base}.pdf`);
       await exportPdfFromMarkdown(reportText, pdfPath);
       outputs.pdf = `/api/reports/${encodeURIComponent(`${base}.pdf`)}`;
-    } catch (e) {
+    } catch {
       // ignore export failure to not break main flow
     }
   }
@@ -265,7 +264,7 @@ export async function POST(req: Request) {
       const docxPath = path.join(outDir, `${base}.docx`);
       await exportDocxFromMarkdown(reportText, docxPath);
       outputs.docx = `/api/reports/${encodeURIComponent(`${base}.docx`)}`;
-    } catch (e) {
+    } catch {
       // ignore
     }
   }

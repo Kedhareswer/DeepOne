@@ -20,15 +20,19 @@ export const googleCSERetriever: RetrieverFn = async (query, opts = {}) => {
     if (!res.ok) throw new Error(`google cse http ${res.status}`);
     const json = await res.json();
 
-    const items: any[] = json.items || [];
+    const items: unknown[] = json.items || [];
     return {
       provider: "google_cse",
       query,
-      results: items.slice(0, max).map((it) => ({
-        title: it.title,
-        url: it.link,
-        content: it.snippet,
-      })),
+      results: items.slice(0, max).map((it) => {
+        type GoogleCSEItem = { title: string; link: string; snippet?: string };
+        const item = it as GoogleCSEItem;
+        return {
+          title: item.title,
+          url: item.link,
+          content: item.snippet,
+        };
+      }),
     } satisfies RetrieverResponse;
   } finally {
     clearTimeout(to);

@@ -3,7 +3,7 @@ import { generateText } from "ai";
 
 export const runtime = "nodejs";
 
-function sseEncode(obj: any) {
+function sseEncode(obj: unknown) {
   return `data: ${JSON.stringify(obj)}\n\n`;
 }
 
@@ -13,7 +13,6 @@ async function selectModel(provider: string, model: string) {
     return createOpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: "https://api.groq.com/openai" })(model);
   if (provider === "anthropic") {
     try {
-      // @ts-ignore: optional dependency, imported dynamically
       const mod = await import("@ai-sdk/anthropic");
       return mod.anthropic(model);
     } catch {
@@ -108,7 +107,7 @@ export async function GET(req: Request) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      function send(evt: any) {
+      function send(evt: unknown) {
         controller.enqueue(encoder.encode(sseEncode(evt)));
       }
       try {
@@ -168,8 +167,8 @@ export async function GET(req: Request) {
 
         send({ type: "completed", message: "Report composed", wordsTarget: TOTAL_WORDS, sources: aggregated.length, preview: reportText.slice(0, 500) });
         controller.close();
-      } catch (e: any) {
-        send({ type: "error", message: e?.message || String(e) });
+      } catch (e: unknown) {
+        send({ type: "error", message: (e as Error)?.message || String(e) });
         controller.close();
       }
     },

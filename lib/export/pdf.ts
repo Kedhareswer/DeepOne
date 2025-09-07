@@ -4,8 +4,7 @@ import path from "path";
 export async function exportPdfFromMarkdown(markdown: string, outPath: string): Promise<string> {
   await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
   // Dynamic import to avoid compile-time deps if package not installed yet
-  // @ts-ignore - optional dependency; install types with: npm i -D @types/pdfkit
-  const mod: any = await import("pdfkit").catch(() => null);
+  const mod = await import("pdfkit").catch(() => null);
   if (!mod) {
     throw new Error("pdfkit is not installed. Run: npm i pdfkit");
   }

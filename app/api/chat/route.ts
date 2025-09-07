@@ -38,28 +38,25 @@ export async function POST(req: Request) {
       break;
     case "anthropic":
       try {
-        // @ts-ignore: optional dependency, imported dynamically
         const mod = await import("@ai-sdk/anthropic");
         model = mod.anthropic(modelId);
-      } catch (e) {
+      } catch {
         throw new Error(`Anthropic provider failed: @ai-sdk/anthropic not installed or invalid. Install with: npm i @ai-sdk/anthropic`);
       }
       break;
     case "google":
       try {
-        // @ts-ignore: optional dependency, imported dynamically
         const mod = await import("@ai-sdk/google");
         model = mod.google(modelId);
-      } catch (e) {
+      } catch {
         throw new Error(`Google provider failed: @ai-sdk/google not installed or invalid. Install with: npm i @ai-sdk/google`);
       }
       break;
     case "mistral":
       try {
-        // @ts-ignore: optional dependency, imported dynamically
         const mod = await import("@ai-sdk/mistral");
         model = mod.mistral(modelId);
-      } catch (e) {
+      } catch {
         throw new Error(`Mistral provider failed: @ai-sdk/mistral not installed or invalid. Install with: npm i @ai-sdk/mistral`);
       }
       break;
@@ -100,12 +97,12 @@ export async function POST(req: Request) {
     .find((m) => m.role === "user");
   let lastUserText: string | undefined = undefined;
   if (lastUserMsg) {
-    const c: any = (lastUserMsg as any).content;
+    const c = lastUserMsg.content;
     if (typeof c === "string") lastUserText = c;
     else if (Array.isArray(c)) {
       lastUserText = c
-        .filter((p: any) => p?.type === "text" && typeof p.text === "string")
-        .map((p: any) => p.text)
+        .filter((p): p is { type: "text"; text: string } => p?.type === "text" && typeof p.text === "string")
+        .map((p) => p.text)
         .join("\n");
     }
   }
@@ -178,7 +175,7 @@ export async function POST(req: Request) {
         { role: "system", content: findingsBlock },
       ];
     }
-  } catch (err) {
+  } catch {
     // If Tavily isn't configured or fails, continue without findings
     prefixMessages = [
       {

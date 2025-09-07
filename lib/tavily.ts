@@ -31,7 +31,7 @@ export async function tavilySearch(
     );
   }
 
-  const body: Record<string, any> = {
+  const body: Record<string, unknown> = {
     api_key: apiKey,
     query,
     search_depth: opts.searchDepth ?? "basic",
@@ -55,7 +55,7 @@ export async function tavilySearch(
   const json = await res.json();
 
   // Normalize minimal shape used by our pipeline
-  const results: TavilyResult[] = (json.results || []).map((r: any) => ({
+  const results: TavilyResult[] = (json.results || []).map((r: { title: string; url: string; content?: string; snippet?: string; score?: number }) => ({
     title: r.title,
     url: r.url,
     content: r.content ?? r.snippet ?? undefined,

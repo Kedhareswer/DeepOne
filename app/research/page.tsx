@@ -90,8 +90,8 @@ export default function ResearchPage() {
       const fileRes = await fetch(`/api/reports/${encodeURIComponent(json.id)}`);
       const text = await fileRes.text();
       setReportText(text);
-    } catch (err: any) {
-      setError(err?.message || String(err));
+    } catch (err: unknown) {
+      setError((err as Error)?.message || String(err));
     } finally {
       setLoading(false);
     }
@@ -109,8 +109,8 @@ export default function ResearchPage() {
       const json = await res.json();
       setIngestStatus(`Indexed ${json.files} files, ${json.chunks} chunks`);
       if (json.stats) setIndexStats({ items: json.stats.items, updatedAt: json.stats.updatedAt });
-    } catch (e: any) {
-      setIngestStatus(`Ingest failed: ${e?.message || String(e)}`);
+    } catch (e: unknown) {
+      setIngestStatus(`Ingest failed: ${(e as Error)?.message || String(e)}`);
     } finally {
       setIngestLoading(false);
     }
@@ -231,8 +231,8 @@ export default function ResearchPage() {
                     .map((pid) => PROVIDERS.find((p) => p.id === pid))
                     .filter(Boolean)
                     .map((p) => (
-                      <option key={(p as any).id} value={(p as any).id}>
-                        {(p as any).label}
+                      <option key={p!.id} value={p!.id}>
+                        {p!.label}
                       </option>
                     ))
                 : null}
